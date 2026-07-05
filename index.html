@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通話予約カレンダー</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .slot-btn { display: block; width: 100%; margin: 10px 0; padding: 10px; background: #06C755; color: white; border: none; border-radius: 5px; font-size: 16px; }
+    .disabled { background: #ccc; }
+  </style>
+</head>
+<body>
+
+  <h2>ご希望の日時を選択してください</h2>
+  <div id="calendar-slots">
+    <button class="slot-btn" onclick="selectSlot('2026-07-10 14:00')">2026年7月10日 14:00 〜</button>
+    <button class="slot-btn" onclick="selectSlot('2026-07-10 15:00')">2026年7月10日 15:00 〜</button>
+  </div>
+
+  <script>
+    const GAS_WEB_APP_URL = 'https://script.google.com/a/macros/startdash.info/s/AKfycbxawrujWElczF40ME8HgZ4voBA9I8rf-Vmi9twaEFjUAtdzaAY1e9UQ_E-dh7A6r1U0/exec';
+    let userLineId = null;
+
+    // LIFFの初期化
+    liff.init({ liffId: "YOUR_LIFF_ID" })
+      .then(() => {
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        } else {
+          // ユーザープロファイルの取得
+          liff.getProfile().then(profile => {
+            userLineId = profile.userId;
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("LIFF Initialization failed", err);
+      });
+
+    // 日時枠が選択されたときの処理
+    function selectSlot(dateTimeStr) {
+      if (!userLineId) {
+        alert("ユーザー情報の取得を待っています。もう一度お試しください。");
+        return;
+      }
+
+      if (confirm(`${dateTimeStr} で予約を確定しますか？`)) {
+        // GASへ予約データを送信
+        fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors', // GASへの簡易リクエスト用
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'book_appointment',
+            userId: userLineId,
+            dateTime: dateTimeStr
+          })
+        })
+        .then(() => {
+          alert("予約が完了しました。LINEトーク画面をご確認ください。");
+          liff.closeWindow(); // LIFFウィンドウを閉じる
+        })
+        .catch(err => {
+          alert("通信エラーが発生しました。");
+          console.error(err);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
