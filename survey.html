@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>アンケート</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h2>初期アンケート</h2>
+  <form id="surveyForm">
+    <p>推しのライバーのジャンルは？</p>
+    <input type="radio" name="genre" value="雑談" required> 雑談<br>
+    <input type="radio" name="genre" value="ゲーム"> ゲーム<br>
+    <input type="radio" name="genre" value="音楽"> 音楽<br>
+    
+    <button type="submit" style="margin-top:20px;">回答を送信する</button>
+  </form>
+
+  <script>
+    const GAS_WEB_APP_URL = 'あなたのGASのウェブアプリURL';
+    let userLineId = null;
+
+    // LIFF初期化
+    liff.init({ liffId: "YOUR_SURVEY_LIFF_ID" }).then(() => {
+      if (!liff.isLoggedIn()) { liff.login(); }
+      else {
+        liff.getProfile().then(profile => { userLineId = profile.userId; });
+      }
+    });
+
+    // 送信イベント
+    document.getElementById('surveyForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!userLineId) return alert("ユーザー情報取得中...");
+
+      const selectedGenre = document.querySelector('input[name="genre"]:checked').value;
+
+      // GASへデータを送信
+      fetch(GAS_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit_survey',
+          userId: userLineId,
+          genre: selectedGenre // 回答データ
+        })
+      }).then(() => {
+        alert("ご回答ありがとうございました！");
+        liff.closeWindow(); // 画面を閉じる
+      });
+    });
+  </script>
+</body>
+</html>
